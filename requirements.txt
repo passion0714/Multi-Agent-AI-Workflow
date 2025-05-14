@@ -1,0 +1,43 @@
+# Database
+sqlalchemy==2.0.27
+psycopg2-binary==2.9.9
+alembic==1.13.1
+
+# Web and API
+fastapi==0.108.0
+uvicorn==0.25.0
+pydantic==2.5.3
+httpx==0.26.0
+requests==2.31.0
+
+# UI Automation
+playwright==1.41.1
+pyppeteer==1.0.2
+
+# Voice and Telephony
+twilio==8.11.0
+deepgram-sdk==2.18.0
+
+# Utilities
+python-dotenv==1.0.0
+python-multipart==0.0.7
+tenacity==8.2.3
+phonenumbers==8.13.27
+pytz==2023.3.post1
+
+# Concurrency and Async
+asyncio==3.4.3
+aiohttp==3.9.3
+
+# Testing
+pytest==7.4.4
+pytest-asyncio==0.23.5
+pytest-cov==4.1.0
+
+# Development
+black==23.12.1
+flake8==6.1.0
+isort==5.13.2
+
+# Monitoring and Logging
+prometheus-client==0.18.0 

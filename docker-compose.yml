@@ -1,0 +1,87 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15
+    container_name: voiceai_postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-voiceai}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-voiceaipassword}
+      POSTGRES_DB: ${POSTGRES_DB:-voiceai_db}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U voiceai"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Voice Agent Service
+  voice_agent:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE: voice_agent
+    container_name: voiceai_voice_agent
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-voiceai}:${POSTGRES_PASSWORD:-voiceaipassword}@postgres:5432/${POSTGRES_DB:-voiceai_db}
+      - VOICE_API_KEY=${VOICE_API_KEY}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    volumes:
+      - ./shared/logs:/app/shared/logs
+    command: python -m voice_agent.agent
+    restart: unless-stopped
+
+  # Data Entry Agent Service
+  data_entry_agent:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE: data_entry_agent
+    container_name: voiceai_data_entry_agent
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-voiceai}:${POSTGRES_PASSWORD:-voiceaipassword}@postgres:5432/${POSTGRES_DB:-voiceai_db}
+      - LEAD_HOOP_USERNAME=${LEAD_HOOP_USERNAME}
+      - LEAD_HOOP_PASSWORD=${LEAD_HOOP_PASSWORD}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    volumes:
+      - ./shared/logs:/app/shared/logs
+    # Set privileged mode for browser automation
+    privileged: true
+    command: python -m data_entry_agent.agent
+    restart: unless-stopped
+
+  # API Service (for monitoring and management)
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE: api
+    container_name: voiceai_api
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-voiceai}:${POSTGRES_PASSWORD:-voiceaipassword}@postgres:5432/${POSTGRES_DB:-voiceai_db}
+      - API_KEY=${API_KEY}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - "8000:8000"
+    command: uvicorn shared.api:app --host 0.0.0.0 --port 8000
+    restart: unless-stopped
+
+volumes:
+  postgres_data: 

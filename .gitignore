@@ -1,0 +1,121 @@
+# Environment variables and secrets
+.env
+.env.*
+*.env
+.secrets
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+.pytest_cache/
+venv/
+ENV/
+env/
+.venv/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+*.db-shm
+*.db-wal
+
+# OS specific
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE specific
+.idea/
+.vscode/
+*.swp
+*.swo
+.ipynb_checkpoints/
+*.sublime-workspace
+*.sublime-project
+
+# Docker
+.dockerignore
+docker-compose.override.yml
+
+# Build artifacts
+node_modules/
+.coverage
+htmlcov/
+coverage.xml
+*.cover
+.hypothesis/
+
+# Playwright browser data
+**/playwright-report/
+**/playwright/.cache/
+**/test-results/
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*~
+tmp/
+temp/
+
+# Voice data
+recordings/
+transcripts/
+
+# Personal/local configurations
+.personal/
+local_settings.py
+
+# Compiled JavaScript
+*.min.js
+
+# Dependency directories
+.npm
+jspm_packages/
+
+# Distribution / packaging
+bin/
+var/
+
+# Data files
+*.csv
+*.xlsx
+*.xls
+data/exports/
+
+# Certs
+*.pem
+*.key
+*.crt
+*.ca-bundle 
