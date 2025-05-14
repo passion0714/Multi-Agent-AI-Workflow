@@ -12,11 +12,10 @@ requests==2.31.0
 
 # UI Automation
 playwright==1.41.1
-pyppeteer==1.0.2
 
 # Voice and Telephony
 twilio==8.11.0
-deepgram-sdk==2.18.0
+deepgram-sdk==4.1.0
 
 # Utilities
 python-dotenv==1.0.0
@@ -26,7 +25,6 @@ phonenumbers==8.13.27
 pytz==2023.3.post1
 
 # Concurrency and Async
-asyncio==3.4.3
 aiohttp==3.9.3
 
 # Testing
