@@ -21,7 +21,6 @@ sys.path.append(str(Path(__file__).parent.parent))
 
 # Import Playwright modules
 from playwright.async_api import async_playwright, Playwright, Browser, Page, ElementHandle
-from playwright._impl._api_types import Error as PlaywrightError
 
 from database.models import Lead, LeadStatus
 from shared import config, utils
@@ -31,6 +30,14 @@ from data_entry_agent.lead_hoop_mapper import map_lead_to_form_fields
 # Set up logging
 logger = setup_logging("ui_automation")
 setup_stdlib_logging()
+
+try:
+    # First try the newer version's import path
+    from playwright._impl._api_types import Error as PlaywrightError
+except ImportError:
+    # Fall back to using the base Exception class if the specific error type isn't available
+    PlaywrightError = Exception
+    logger.warning("Couldn't import PlaywrightError, using generic Exception instead")
 
 class LeadHoopAutomation:
     """
