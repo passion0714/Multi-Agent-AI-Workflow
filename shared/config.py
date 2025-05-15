@@ -25,7 +25,7 @@ def load_config() -> Dict[str, Any]:
     """
     config = {
         # Database Configuration
-        'DATABASE_URL': os.getenv('DATABASE_URL', 'postgresql://postgres:postgres@localhost:5432/voiceai'),
+        'DATABASE_URL': os.getenv('DATABASE_URL', 'postgresql://postgres:123@localhost:5432/multiagent_db'),
         'DB_POOL_SIZE': os.getenv('DB_POOL_SIZE', '5'),
         'DB_MAX_OVERFLOW': os.getenv('DB_MAX_OVERFLOW', '10'),
         'DB_POOL_TIMEOUT': os.getenv('DB_POOL_TIMEOUT', '30'),
@@ -74,15 +74,32 @@ def get_lead_hoop_config() -> Dict[str, Any]:
     
     Returns:
         Dictionary containing Lead Hoop configuration values.
+        Note: If using a direct portal URL, username and password may be empty.
     """
     config = load_config()
-    return {
+    
+    # Using a dictionary so we don't include empty strings for username/password if they're not set
+    lead_hoop_config = {
         'url': config['LEAD_HOOP_URL'],
-        'username': config['LEAD_HOOP_USERNAME'],
-        'password': config['LEAD_HOOP_PASSWORD'],
         'timeout': int(config['LEAD_HOOP_TIMEOUT']),
         'retry_attempts': int(config['LEAD_HOOP_RETRY_ATTEMPTS']),
     }
+    
+    # Only add username and password if they are set
+    if config['LEAD_HOOP_USERNAME']:
+        lead_hoop_config['username'] = config['LEAD_HOOP_USERNAME']
+    
+    if config['LEAD_HOOP_PASSWORD']:
+        lead_hoop_config['password'] = config['LEAD_HOOP_PASSWORD']
+    
+    # Check if this is a direct portal URL by looking for 'consumer' in the URL
+    # This is specific to the client's LeadHoop setup
+    if 'consumer' in config['LEAD_HOOP_URL'].lower():
+        lead_hoop_config['is_direct_portal'] = True
+    else:
+        lead_hoop_config['is_direct_portal'] = False
+    
+    return lead_hoop_config
 
 
 def get_voice_api_config() -> Dict[str, Any]:
@@ -157,8 +174,30 @@ DATABASE_URL = config['DATABASE_URL']
 API_HOST = config['API_HOST']
 API_PORT = int(config['API_PORT'])
 LEAD_HOOP_URL = config['LEAD_HOOP_URL']
-VOICE_AGENT_POLLING_INTERVAL = int(config['VOICE_AGENT_POLLING_INTERVAL'])
-DATA_ENTRY_AGENT_POLLING_INTERVAL = int(config['DATA_ENTRY_AGENT_POLLING_INTERVAL'])
-MAX_CONCURRENT_CALLS = int(config['MAX_CONCURRENT_CALLS'])
-MAX_CONCURRENT_ENTRIES = int(config['MAX_CONCURRENT_ENTRIES'])
-HEADLESS_BROWSER = config['AGENT_BROWSER_HEADLESS'].lower() == 'true' 
+
+# Clean any potential comments from the values before converting to int
+try:
+    VOICE_AGENT_POLLING_INTERVAL = int(config['VOICE_AGENT_POLLING_INTERVAL'].split('#')[0].strip())
+except (ValueError, AttributeError):
+    VOICE_AGENT_POLLING_INTERVAL = 5  # Default value
+
+try:
+    DATA_ENTRY_AGENT_POLLING_INTERVAL = int(config['DATA_ENTRY_AGENT_POLLING_INTERVAL'].split('#')[0].strip())
+except (ValueError, AttributeError):
+    DATA_ENTRY_AGENT_POLLING_INTERVAL = 5  # Default value
+
+try:
+    MAX_CONCURRENT_CALLS = int(config['MAX_CONCURRENT_CALLS'].split('#')[0].strip())
+except (ValueError, AttributeError):
+    MAX_CONCURRENT_CALLS = 5  # Default value
+
+try:
+    MAX_CONCURRENT_ENTRIES = int(config['MAX_CONCURRENT_ENTRIES'].split('#')[0].strip())
+except (ValueError, AttributeError):
+    MAX_CONCURRENT_ENTRIES = 3  # Default value
+
+# Handle boolean configuration
+HEADLESS_BROWSER_VALUE = config['AGENT_BROWSER_HEADLESS']
+if isinstance(HEADLESS_BROWSER_VALUE, str):
+    HEADLESS_BROWSER_VALUE = HEADLESS_BROWSER_VALUE.split('#')[0].strip()
+HEADLESS_BROWSER = HEADLESS_BROWSER_VALUE.lower() == 'true' if isinstance(HEADLESS_BROWSER_VALUE, str) else bool(HEADLESS_BROWSER_VALUE) 

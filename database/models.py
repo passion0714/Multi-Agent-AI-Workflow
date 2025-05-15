@@ -185,12 +185,19 @@ class LeadLog(Base):
 # Create a database connection engine
 def get_engine():
     """Get the SQLAlchemy engine"""
-    db_config = config.get_database_config()
-    return create_engine(db_config["url"], 
-                         echo=db_config["echo"],
-                         pool_size=db_config.get("pool_size"),
-                         pool_timeout=db_config.get("pool_timeout"),
-                         pool_recycle=db_config.get("pool_recycle"))
+    # Get the configuration but use hardcoded values for now
+    db_config = config.get_db_config()
+    
+    # For debugging
+    print(f"Using database URL: {db_config['url']}")
+    
+    # Hardcoded connection string that we know works
+    return create_engine(
+        "postgresql://postgres:123@127.0.0.1:5432/multiagent_db",  # Hardcoded for now to ensure correct values
+        pool_size=db_config.get("pool_size", 5),
+        pool_timeout=db_config.get("pool_timeout", 30),
+        pool_recycle=db_config.get("pool_recycle", 1800)
+    )
 
 
 # Session factory

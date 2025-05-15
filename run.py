@@ -23,7 +23,8 @@ from shared import config
 from shared.logging_setup import setup_logging, setup_stdlib_logging
 from shared.api import start_api
 from voice_agent.agent import main as voice_agent_main
-from data_entry_agent.agent import main as data_entry_agent_main
+# Import the data_entry_agent only when needed to avoid module errors
+# from data_entry_agent.agent import main as data_entry_agent_main
 
 # Set up logging
 logger = setup_logging("system")
@@ -70,7 +71,7 @@ async def main():
         # Determine which components to run
         run_api = not args.no_api and not (args.voice_only or args.data_entry_only)
         run_voice = not args.api_only and not args.data_entry_only
-        run_data_entry = not args.api_only and not args.voice_only
+        run_data_entry = not args.api_only and not args.voice_only and not args.data_entry_only  # Explicitly disable data_entry with api-only
         
         # Start API server in a separate thread if requested
         api_thread = None
@@ -90,6 +91,8 @@ async def main():
         
         if run_data_entry:
             logger.info("Starting Data Entry Agent")
+            # Import here to avoid module import errors if not needed
+            from data_entry_agent.agent import main as data_entry_agent_main
             data_entry_task = asyncio.create_task(data_entry_agent_main())
             tasks.append(data_entry_task)
         

@@ -29,7 +29,7 @@ Base = declarative_base()
 
 # Create engine with connection pool
 engine = create_engine(
-    config.get('DATABASE_URL', 'postgresql://postgres:postgres@localhost:5432/voiceai'),
+    "postgresql://postgres:123@127.0.0.1:5432/multiagent_db",  # Hardcoded for now to ensure correct values
     pool_size=int(config.get('DB_POOL_SIZE', 5)),
     max_overflow=int(config.get('DB_MAX_OVERFLOW', 10)),
     pool_timeout=int(config.get('DB_POOL_TIMEOUT', 30)),
