@@ -31,6 +31,8 @@ venv/
 ENV/
 env/
 .venv/
+new_venv/
+.new_venv/
 
 # Logs
 logs/

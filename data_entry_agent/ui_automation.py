@@ -55,6 +55,7 @@ class LeadHoopAutomation:
         self.password = self.config.get('password')
         self.timeout = self.config.get('timeout', 30) * 1000  # Convert to ms
         self.retry_attempts = self.config.get('retry_attempts', 3)
+        self.is_direct_portal = self.config.get('is_direct_portal', False)
         
         # Playwright objects
         self.playwright = None
@@ -65,7 +66,10 @@ class LeadHoopAutomation:
         # Login state
         self.logged_in = False
         
-        logger.info(f"Initialized Lead Hoop automation (headless: {headless})")
+        if self.is_direct_portal:
+            logger.info(f"Initialized Lead Hoop automation with direct portal URL (headless: {headless})")
+        else:
+            logger.info(f"Initialized Lead Hoop automation with login credentials (headless: {headless})")
     
     async def setup(self):
         """Set up Playwright and launch the browser"""
@@ -105,10 +109,10 @@ class LeadHoopAutomation:
     
     async def login(self) -> bool:
         """
-        Log in to the Lead Hoop portal.
+        Log in to the Lead Hoop portal or navigate directly to the form URL.
         
         Returns:
-            True if login was successful, False otherwise
+            True if login was successful or direct navigation worked, False otherwise
         """
         if not self.page:
             logger.error("Cannot log in: Browser not initialized")
@@ -119,17 +123,32 @@ class LeadHoopAutomation:
             return True
         
         try:
-            logger.info(f"Navigating to Lead Hoop login page: {self.login_url}")
+            logger.info(f"Navigating to Lead Hoop URL: {self.login_url}")
             
-            # Navigate to the login page
+            # Navigate to the provided URL
             await self.page.goto(self.login_url, wait_until="networkidle")
             
-            # Check if we're already on the dashboard (already logged in)
+            # For direct portal URLs, we just need to check if we're on the form page
+            if self.is_direct_portal:
+                if await self._is_lead_form_page():
+                    logger.info("Successfully navigated directly to lead form")
+                    self.logged_in = True
+                    return True
+                else:
+                    logger.error("Direct portal URL did not lead to a form page")
+                    return False
+            
+            # For traditional login, check if we're already on the dashboard
             if await self._is_dashboard_page():
                 logger.info("Already logged in to Lead Hoop")
                 self.logged_in = True
                 return True
             
+            # If we're not using a direct portal but don't have credentials, we can't proceed
+            if not self.username or not self.password:
+                logger.error("No login credentials provided and not using a direct portal URL")
+                return False
+                
             logger.info("Filling in login credentials")
             
             # Fill in the username/email field
@@ -175,25 +194,40 @@ class LeadHoopAutomation:
         Returns:
             A dictionary with the result of the data entry
         """
-        if not self.page or not self.logged_in:
-            logger.error("Cannot enter lead: Not logged in")
+        if not self.page:
+            logger.error("Cannot enter lead: Browser not initialized")
             return {
                 "success": False,
-                "error": "Not logged in to Lead Hoop",
-                "notes": "Please log in before attempting to enter leads"
+                "error": "Browser not initialized",
+                "notes": "Please initialize the browser before attempting to enter leads"
             }
         
         try:
-            # Navigate to the lead entry form
-            logger.info("Navigating to lead entry form")
-            form_navigated = await self._navigate_to_lead_form()
-            
-            if not form_navigated:
-                return {
-                    "success": False,
-                    "error": "Could not navigate to lead entry form",
-                    "notes": "Failed to find or navigate to the lead entry form"
-                }
+            # For direct form links, navigate directly to the form URL
+            # For traditional login flows, navigate through the dashboard
+            if self.is_direct_portal:
+                # For direct portal, just make sure we're on the form page
+                if not await self._is_lead_form_page():
+                    logger.info("Navigating to direct form URL")
+                    await self.page.goto(self.login_url, wait_until="networkidle")
+                    if not await self._is_lead_form_page():
+                        return {
+                            "success": False,
+                            "error": "Could not navigate to lead entry form",
+                            "notes": "Direct portal URL did not lead to a form page"
+                        }
+            else:
+                # Traditional flow - navigate through dashboard
+                if not await self._is_lead_form_page():
+                    logger.info("Navigating to lead entry form through dashboard")
+                    form_navigated = await self._navigate_to_lead_form()
+                    
+                    if not form_navigated:
+                        return {
+                            "success": False,
+                            "error": "Could not navigate to lead entry form",
+                            "notes": "Failed to find or navigate to the lead entry form from dashboard"
+                        }
             
             # Map lead data to form fields
             field_mapping = map_lead_to_form_fields(lead)
@@ -262,9 +296,13 @@ class LeadHoopAutomation:
             return False
         
         try:
-            # Navigate to the dashboard or refresh the current page
-            if self.logged_in:
-                # Navigate to dashboard
+            if self.is_direct_portal:
+                # For direct portal, just navigate back to the form URL
+                logger.debug("Refreshing session by navigating back to direct form URL")
+                await self.page.goto(self.login_url, wait_until="networkidle")
+                return await self._is_lead_form_page()
+            elif self.logged_in:
+                # Navigate to dashboard for traditional login flow
                 logger.debug("Refreshing session by navigating to dashboard")
                 await self._navigate_to_dashboard()
                 return True
