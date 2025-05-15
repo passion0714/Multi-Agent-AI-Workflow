@@ -174,6 +174,7 @@ DATABASE_URL = config['DATABASE_URL']
 API_HOST = config['API_HOST']
 API_PORT = int(config['API_PORT'])
 LEAD_HOOP_URL = config['LEAD_HOOP_URL']
+VOICE_API_PROVIDER = config['VOICE_API_PROVIDER']
 
 # Clean any potential comments from the values before converting to int
 try:
