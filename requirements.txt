@@ -1,0 +1,35 @@
+# Core dependencies
+psycopg2-binary==2.9.9
+SQLAlchemy==2.0.23
+pandas==2.2.3
+python-dotenv==1.0.0
+
+# Voice API integration (Assistable.AI)
+requests==2.31.0
+websockets==11.0.3
+
+# UI Automation
+playwright==1.41.0
+pytest-playwright==0.4.0
+
+# AWS S3 integration for call recordings
+boto3==1.29.0
+
+# Logging and monitoring
+loguru==0.7.2
+
+# Testing
+pytest==7.4.3
+
+# Web server for potential API endpoints
+fastapi==0.104.1
+uvicorn==0.24.0
+pydantic==2.4.2
+
+# Async support
+asyncio==3.4.3
+aiohttp==3.9.0
+
+# Additional utilities
+tqdm==4.66.1
+python-decouple==3.8 

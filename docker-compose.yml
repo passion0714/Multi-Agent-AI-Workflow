@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: multiagent_app
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+    environment:
+      - DATABASE_URL=postgresql://multiagent:${DB_PASSWORD:-multiagent_password}@db:5432/multiagent_db
+      - ASSISTABLE_API_KEY=${ASSISTABLE_API_KEY}
+      - LEADHOOP_USERNAME=${LEADHOOP_USERNAME}
+      - LEADHOOP_PASSWORD=${LEADHOOP_PASSWORD}
+      - AWS_ACCESS_KEY=${AWS_ACCESS_KEY}
+      - AWS_SECRET_KEY=${AWS_SECRET_KEY}
+      - AWS_REGION=${AWS_REGION:-us-east-1}
+      - S3_BUCKET_NAME=${S3_BUCKET_NAME}
+    depends_on:
+      - db
+    restart: unless-stopped
+
+  db:
+    image: postgres:14
+    container_name: multiagent_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=multiagent
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-multiagent_password}
+      - POSTGRES_DB=multiagent_db
+    restart: unless-stopped
+
+volumes:
+  postgres_data: 

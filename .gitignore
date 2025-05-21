@@ -1,0 +1,49 @@
+# Environment and configuration
+.env
+.env.*
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+.deps_installed
+
+# Logs and data
+logs/
+logs/screenshots/
+data/export/
+data/import/
+*.log
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Virtual browser profiles
+.playwright/
+
+# Temporary files
+temp/
+tmp/
+
+# Development files
+*.bak
+*.old
+*.tmp
+
+# Docker volumes
+postgres_data/ 
