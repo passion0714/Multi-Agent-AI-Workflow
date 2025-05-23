@@ -1,8 +1,7 @@
 from sqlalchemy import Column, String, Integer, Boolean, DateTime, Text, Enum, ForeignKey, create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import declarative_base, relationship
 import enum
-from datetime import datetime
+from datetime import datetime, timezone
 import os
 from dotenv import load_dotenv
 
@@ -64,9 +63,9 @@ class Lead(Base):
     
     # Workflow and tracking fields
     status = Column(Enum(LeadStatus), default=LeadStatus.PENDING)
-    status_updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    status_updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     
     # Call information
     call_initiated_at = Column(DateTime, nullable=True)
@@ -100,7 +99,7 @@ class CallLog(Base):
     
     id = Column(Integer, primary_key=True)
     lead_id = Column(Integer, ForeignKey("leads.id"))
-    initiated_at = Column(DateTime, default=datetime.utcnow)
+    initiated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     completed_at = Column(DateTime, nullable=True)
     duration = Column(Integer, nullable=True)  # Duration in seconds
     status = Column(String(50))  # 'completed', 'failed', 'no-answer', etc.
@@ -120,7 +119,7 @@ class EntryLog(Base):
     
     id = Column(Integer, primary_key=True)
     lead_id = Column(Integer, ForeignKey("leads.id"))
-    initiated_at = Column(DateTime, default=datetime.utcnow)
+    initiated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     completed_at = Column(DateTime, nullable=True)
     duration = Column(Integer, nullable=True)  # Duration in seconds
     status = Column(String(50))  # 'completed', 'failed', etc.

@@ -29,7 +29,32 @@ class LeadRepository:
             The lead object if found, None otherwise.
         """
         with get_db_session() as session:
-            return session.query(Lead).filter(Lead.id == lead_id).first()
+            # Use joinedload to eagerly load all relationships to avoid detached instance issues
+            lead = session.query(Lead).filter(Lead.id == lead_id).first()
+            
+            if lead:
+                # Ensure all attributes are loaded before session closes
+                session.refresh(lead)
+                
+                # Make a detached copy with all attributes loaded
+                lead_copy = Lead(
+                    id=lead.id,
+                    firstname=lead.firstname,
+                    lastname=lead.lastname,
+                    email=lead.email,
+                    phone1=lead.phone1,
+                    address=lead.address,
+                    address2=lead.address2,
+                    city=lead.city,
+                    state=lead.state,
+                    zip=lead.zip,
+                    status=lead.status,
+                    created_at=lead.created_at,
+                    updated_at=lead.updated_at,
+                    # Add other fields as needed
+                )
+                return lead_copy
+            return None
     
     @staticmethod
     def get_leads_by_status(status: LeadStatus, limit: int = 100) -> List[Lead]:

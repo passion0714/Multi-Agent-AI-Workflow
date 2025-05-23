@@ -34,6 +34,10 @@ class TestDatabase(unittest.TestCase):
         # Create a new session for each test
         self.session = self.SessionFactory()
         
+        # Clean up any existing test data
+        self.session.query(Lead).filter_by(email="test@example.com").delete()
+        self.session.commit()
+        
         # Create a test lead
         self.test_lead = Lead(
             firstname="Test",
@@ -50,11 +54,16 @@ class TestDatabase(unittest.TestCase):
         # Add the test lead to the session
         self.session.add(self.test_lead)
         self.session.commit()
+        # Refresh to get the assigned ID
+        self.session.refresh(self.test_lead)
 
     def tearDown(self):
         """Clean up after each test."""
-        # Roll back the transaction to clean up
-        self.session.rollback()
+        # Delete any test leads
+        self.session.query(Lead).filter_by(email="test@example.com").delete()
+        self.session.commit()
+        
+        # Close the session
         self.session.close()
 
     def test_lead_creation(self):
@@ -82,14 +91,28 @@ class TestDatabase(unittest.TestCase):
 
     def test_update_lead_status(self):
         """Test updating a lead's status."""
+        # Store the ID for later comparison
+        test_lead_id = self.test_lead.id
+        
         # Update the lead's status
         self.test_lead.status = LeadStatus.CALLING
         self.session.commit()
         
-        # Query the lead from the database
-        lead = self.session.query(Lead).filter_by(email="test@example.com").first()
+        # Force a flush and refresh to ensure the change is persisted
+        self.session.flush()
+        self.session.refresh(self.test_lead)
         
-        # Check that the status was updated
+        # Query the lead from the database by ID to ensure we get the right one
+        lead = self.session.query(Lead).filter_by(id=test_lead_id).first()
+        
+        # Ensure we found a lead
+        self.assertIsNotNone(lead, "Failed to retrieve the lead by ID")
+        
+        # Ensure we're comparing the same objects by checking IDs
+        self.assertEqual(lead.id, self.test_lead.id)
+        
+        # Check that the status was updated - both on test_lead and queried lead
+        self.assertEqual(self.test_lead.status, LeadStatus.CALLING)
         self.assertEqual(lead.status, LeadStatus.CALLING)
 
 
@@ -127,10 +150,18 @@ class TestRepositoryIntegration(unittest.TestCase):
 
     def test_create_lead(self):
         """Test creating a lead through the repository."""
+        # Get environment variable and strip any whitespace
+        environment = os.getenv("ENVIRONMENT", "").strip()
+        print(f"\nENVIRONMENT='{environment}', type={type(environment)}")
+        print(f"ENVIRONMENT in ['test', 'development']: {environment in ['test', 'development']}")
+        
         # Skip this test if we're not in a test environment
-        if os.getenv("ENVIRONMENT") not in ["test", "development"]:
+        if environment not in ["test", "development"]:
+            print("Skipping test due to ENVIRONMENT not being 'test' or 'development'")
             self.skipTest("Skipping integration test in non-test environment")
-            
+        
+        print("Running integration test create_lead...")
+        
         # Create the lead
         lead_id = LeadRepository.create_lead(self.test_lead_data)
         
@@ -140,15 +171,19 @@ class TestRepositoryIntegration(unittest.TestCase):
         # Retrieve the lead
         lead = LeadRepository.get_lead_by_id(lead_id)
         
-        # Check that the lead has the correct data
+        # Check that the lead has the correct data - lead should be a detached copy with all fields loaded
+        self.assertIsNotNone(lead, "Lead not found after creation")
         self.assertEqual(lead.firstname, "Integration")
         self.assertEqual(lead.lastname, "Test")
         self.assertEqual(lead.email, "integration@test.com")
         
-        # Clean up
+        # Clean up - make sure we use a session
         with get_db_session() as session:
-            session.delete(lead)
-            session.commit()
+            # Find the lead again within this session
+            db_lead = session.query(Lead).filter(Lead.id == lead_id).first()
+            if db_lead:
+                session.delete(db_lead)
+                session.commit()
 
 
 if __name__ == "__main__":
