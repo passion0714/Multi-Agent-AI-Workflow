@@ -207,6 +207,10 @@ async def main():
     parser.add_argument("--voice-batch", type=int, default=5, help="Batch size for the Voice Agent")
     parser.add_argument("--entry-batch", type=int, default=3, help="Batch size for the Data Entry Agent")
     parser.add_argument("--csv-interval", type=int, default=60, help="Interval in seconds between CSV processing runs")
+    parser.add_argument("--api", action="store_true", help="Run the API server")
+    parser.add_argument("--api-only", action="store_true", help="Run only the API server without the main application")
+    parser.add_argument("--api-host", type=str, default="0.0.0.0", help="Host for the API server")
+    parser.add_argument("--api-port", type=int, default=8000, help="Port for the API server")
     parser.add_argument("--status-only", action="store_true", help="Just print system status and exit")
     args = parser.parse_args()
     
